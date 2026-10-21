@@ -1,4 +1,4 @@
-name: Build IPA (unsigned)
+name: Build Simulator App + Unsigned IPA
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   build:
-    name: Build unsigned IPA
+    name: Build (simulator + device)
     runs-on: macos-latest
     timeout-minutes: 30
     steps:
@@ -23,7 +23,32 @@ jobs:
       - name: Show Xcode version
         run: xcodebuild -version
 
-      - name: Build (no codesign)
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build for Simulator (no codesign)
+        run: |
+          xcodebuild -project Melodia.xcodeproj \
+            -target Melodia \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            -quiet \
+            build
+
+      - name: Upload Simulator .app
+        uses: actions/upload-artifact@v4
+        with:
+          name: Melodia-simulator-app
+          path: build/Debug-iphonesimulator/Melodia.app
+          retention-days: 7
+          if-no-files-found: error
+
+      - name: Build for Device (no codesign)
         run: |
           xcodebuild -project Melodia.xcodeproj \
             -target Melodia \
@@ -41,7 +66,7 @@ jobs:
           cp -r build/Release-iphoneos/Melodia.app Payload/
           zip -r -q Melodia-unsigned.ipa Payload
 
-      - name: Upload artifact
+      - name: Upload unsigned IPA
         uses: actions/upload-artifact@v4
         with:
           name: Melodia-unsigned-ipa
