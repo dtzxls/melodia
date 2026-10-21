@@ -1,0 +1,8 @@
+# Melodia — Arquivos ignorados pelo git
+build/
+DerivedData/
+*.xcworkspace
+xcuserdata/
+.DS_Store
+*.ipa
+Payload/
